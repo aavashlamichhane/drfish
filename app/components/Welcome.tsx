@@ -1,4 +1,4 @@
-import { UserData } from "../data";
+import { UserData } from "../lib/data";
 
 interface WelcomeProps {
   userEmail: string;

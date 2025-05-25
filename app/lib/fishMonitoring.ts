@@ -26,7 +26,7 @@ export const FISH_PARAMETERS: FishParameters = {
       optimal: { min: 10, max: 15 },
       good: { min: 5, max: 18 },
       poor: { min: 2, max: 22 },
-      critical: { min: -Infinity, max: Infinity },
+      critical: { min: -Infinity, max: 2 },
     },
     dissolvedOxygen: {
       name: "Dissolved Oxygen",
@@ -85,8 +85,8 @@ export const FISH_PARAMETERS: FishParameters = {
       good: { min: 25, max: 80 },
       poor: { min: 15, max: 100 },
       critical: { min: -Infinity, max: 15 },
-      },
     },
+  },
 };
 
 export function getParameterStatus(
@@ -116,6 +116,7 @@ export function getOverallStatus(
 ): {
   status: ParameterStatus;
   warnings: string[];
+  recommendations: string[];
 } {
   const parameters = FISH_PARAMETERS[fishType];
   const statuses = {
@@ -132,18 +133,47 @@ export function getOverallStatus(
   };
 
   const warnings: string[] = [];
+  const recommendations: string[] = [];
+
   Object.entries(statuses).forEach(([param, status]) => {
     if (status === "critical" || status === "poor") {
       warnings.push(`${param} is in ${status} condition`);
+
+      // Add recommendations based on parameter and status
+      switch (param) {
+        case "temperature":
+          recommendations.push(
+            readings.temperature > parameters.temperature.optimal.max
+              ? "Increase water flow rate or add cooling system"
+              : "Add heaters or reduce water flow"
+          );
+          break;
+        case "dissolvedOxygen":
+          recommendations.push(
+            "Install additional aerators or reduce fish density"
+          );
+          break;
+        case "pH":
+          recommendations.push(
+            readings.pH > parameters.pH.optimal.max
+              ? "Add pH reducer or increase water exchange"
+              : "Add limestone or increase alkalinity"
+          );
+          break;
+        case "turbidity":
+          recommendations.push(
+            "Check filtration system and reduce feeding rate"
+          );
+          break;
+      }
     }
   });
 
   // Get the worst status
-  if (Object.values(statuses).includes("critical"))
-    return { status: "critical", warnings };
-  if (Object.values(statuses).includes("poor"))
-    return { status: "poor", warnings };
-  if (Object.values(statuses).includes("good"))
-    return { status: "good", warnings };
-  return { status: "optimal", warnings };
+  let status: ParameterStatus = "optimal";
+  if (Object.values(statuses).includes("critical")) status = "critical";
+  else if (Object.values(statuses).includes("poor")) status = "poor";
+  else if (Object.values(statuses).includes("good")) status = "good";
+
+  return { status, warnings, recommendations };
 }

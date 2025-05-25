@@ -1,14 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import Welcome from "../components/Welcome";
 import { useSearchParams } from "next/navigation";
-import { UserData, generateRandomDataInterval } from "../data";
+import { generateRandomDataInterval } from "../lib/data";
 import { getOverallStatus } from "../lib/fishMonitoring";
 
 const Page = () => {
   const searchParams = useSearchParams();
-  const email = searchParams.get("email") || "";
-  const userData = UserData.find((user) => user.email === email);
+  const fishType = (searchParams.get("fish") as "Trout" | "Carp") || "Trout";
 
   const [readings, setReadings] = useState({
     temp: "0",
@@ -16,50 +14,35 @@ const Page = () => {
     pH: "0",
     turbidity: "0",
   });
-  const [status, setStatus] = useState<{ status: string; warnings: string[] }>({ status: "optimal", warnings: [] });
+  const [status, setStatus] = useState<{ status: string; warnings: string[]; recommendations: string[] }>({
+    status: "optimal",
+    warnings: [],
+    recommendations: [],
+  });
 
   useEffect(() => {
     const interval = generateRandomDataInterval((newData) => {
       setReadings(newData);
-      if (userData) {
-        // Convert string values to numbers for monitoring
-        const numericReadings = {
-          temperature: parseFloat(newData.temp),
-          dissolvedOxygen: parseFloat(newData.dissolvedOxygen),
-          pH: parseFloat(newData.pH),
-          turbidity: parseFloat(newData.turbidity),
-        };
 
-        // Get status based on fish species
-        const newStatus = getOverallStatus(
-          numericReadings,
-          userData.fishSpecies as "Trout" | "Carp"
-        );
-        setStatus(newStatus);
-      }
-    });
+      const numericReadings = {
+        temperature: parseFloat(newData.temp),
+        dissolvedOxygen: parseFloat(newData.dissolvedOxygen),
+        pH: parseFloat(newData.pH),
+        turbidity: parseFloat(newData.turbidity),
+      };
 
-    return () => {
-      if (interval !== undefined) {
-        clearInterval(interval);
-      }
-    };
-  }, [userData]);
+      const newStatus = getOverallStatus(numericReadings, fishType);
+      setStatus(newStatus);
+    }, fishType);
 
-  if (!userData) {
-    return <div className="text-white p-4">User not found</div>;
-  }
+    return () => clearInterval(interval);
+  }, [fishType]);
 
   return (
     <div className="p-4 flex flex-col gap-4">
-      <Welcome userEmail={email} />
-
-      {/* Simple Status Display */}
       <div className="rounded-2xl bg-[#1e2630] p-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg text-[#ffb43a]">
-            {userData.fishSpecies} Parameters
-          </h2>
+          <h2 className="text-lg text-[#ffb43a]">{fishType} Parameters</h2>
           <span
             className={`px-3 py-1 rounded-full ${
               status.status === "optimal"
@@ -76,7 +59,6 @@ const Page = () => {
         </div>
       </div>
 
-      {/* Readings Grid */}
       <div className="grid grid-cols-2 gap-4">
         <div className="p-4 bg-[#1e2630] rounded-2xl">
           <p className="text-gray-400 mb-1">Temperature</p>
