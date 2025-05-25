@@ -89,6 +89,72 @@ export const FISH_PARAMETERS: FishParameters = {
   },
 };
 
+export type AlertType = {
+  id: string;
+  title: string;
+  description: string;
+  type: "temperature" | "oxygen" | "ph" | "turbidity";
+  severity: "critical" | "warning" | "info";
+  icon: string;
+  solutions: string[];
+};
+
+export function getAlerts(
+  readings: {
+    temperature: number;
+    dissolvedOxygen: number;
+    pH: number;
+    turbidity: number;
+  },
+  fishType: "Trout" | "Carp"
+): AlertType[] {
+  const alerts: AlertType[] = [];
+  const params = FISH_PARAMETERS[fishType];
+
+  // Temperature Alerts
+  if (
+    (fishType === "Trout" && readings.temperature > 18) ||
+    (fishType === "Carp" && readings.temperature > 35)
+  ) {
+    alerts.push({
+      id: "temp-high",
+      title: "Water Too Warm",
+      description: `Temperature is ${readings.temperature}°C, which is above optimal range for ${fishType}`,
+      type: "temperature",
+      severity: "critical",
+      icon: "🌡️",
+      solutions: [
+        "Increase water flow rates",
+        "Add shade structures",
+        "Use chillers if available",
+        "Implement additional aeration",
+      ],
+    });
+  }
+
+  // Oxygen Alerts
+  if (readings.dissolvedOxygen < 5) {
+    alerts.push({
+      id: "oxygen-low",
+      title: "Low Oxygen Levels",
+      description: "Dissolved oxygen levels are critically low",
+      type: "oxygen",
+      severity: "critical",
+      icon: "O₂",
+      solutions: [
+        "Install mechanical aerators",
+        "Reduce fish density",
+        "Remove excess organic matter",
+        "Increase water exchange rate",
+      ],
+    });
+  }
+
+  // Add more alerts for pH and Turbidity...
+
+  return alerts;
+}
+
 export function getParameterStatus(
   value: number,
   parameter: Parameter
@@ -117,6 +183,7 @@ export function getOverallStatus(
   status: ParameterStatus;
   warnings: string[];
   recommendations: string[];
+  alerts: AlertType[];
 } {
   const parameters = FISH_PARAMETERS[fishType];
   const statuses = {
@@ -175,5 +242,7 @@ export function getOverallStatus(
   else if (Object.values(statuses).includes("poor")) status = "poor";
   else if (Object.values(statuses).includes("good")) status = "good";
 
-  return { status, warnings, recommendations };
+  const alerts = getAlerts(readings, fishType);
+
+  return { status, warnings, recommendations, alerts };
 }

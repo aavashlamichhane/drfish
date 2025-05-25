@@ -18,7 +18,7 @@ const Page = () => {
     status: string;
     warnings: string[];
     recommendations: string[];
-    alerts: any[]; // Replace 'any' with the actual AlertType if available
+    alerts: any[]; // Replace 'any' with 'AlertType' if it's imported/defined
   }>({
     status: "optimal",
     warnings: [],
