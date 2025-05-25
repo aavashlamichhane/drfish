@@ -4,6 +4,7 @@ import { generateRandomDataInterval } from "../../lib/data";
 import { getOverallStatus } from "../../lib/fishMonitoring";
 import Weather from "../../components/Weather";
 import Welcome from "@/app/components/Welcome";
+import { AlertTriangle, CheckCircle, Info } from "lucide-react";
 
 const Page = () => {
   const [fishType, setFishType] = useState<"Trout" | "Carp" | null>(null);
@@ -55,6 +56,41 @@ const Page = () => {
     return () => clearInterval(interval);
   }, [fishType]);
 
+  const getParamStatus = (
+    param: "temperature" | "dissolvedOxygen" | "pH" | "turbidity",
+    value: number,
+    fishType: "Trout" | "Carp"
+  ) => {
+    // Define optimal ranges for each fish type
+    const ranges = {
+      Trout: {
+        temperature: { min: 10, max: 18 },
+        dissolvedOxygen: { min: 5, max: 10 },
+        pH: { min: 6.5, max: 8 },
+        turbidity: { min: 0, max: 100 },
+      },
+      Carp: {
+        temperature: { min: 15, max: 30 },
+        dissolvedOxygen: { min: 4, max: 10 },
+        pH: { min: 6.5, max: 9 },
+        turbidity: { min: 0, max: 120 },
+      },
+    };
+
+    const range = ranges[fishType][param];
+    if (value < range.min || value > range.max) {
+      return {
+        icon: <AlertTriangle className="w-5 h-5 text-yellow-400" />,
+        status: "warning",
+      };
+    }
+    // You can add more status levels if needed
+    return {
+      icon: <CheckCircle className="w-5 h-5 text-green-400" />,
+      status: "ok",
+    };
+  };
+
   if (!fishType) {
     return (
       <div className="flex flex-col items-center justify-center min-h-screen text-gray-400">
@@ -87,21 +123,50 @@ const Page = () => {
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <div className="p-4 bg-[#1e2630] rounded-2xl">
-          <p className="text-gray-400 mb-1">Temperature</p>
-          <p className="text-2xl text-white">{readings.temp}°C</p>
+        <div className="p-4 bg-[#1e2630] rounded-2xl flex items-center gap-3">
+          {
+            getParamStatus("temperature", parseFloat(readings.temp), fishType)
+              .icon
+          }
+          <div>
+            <p className="text-gray-400 mb-1">Temperature</p>
+            <p className="text-2xl text-white">{readings.temp}°C</p>
+          </div>
         </div>
-        <div className="p-4 bg-[#1e2630] rounded-2xl">
-          <p className="text-gray-400 mb-1">Oxygen</p>
-          <p className="text-2xl text-white">{readings.dissolvedOxygen} mg/L</p>
+        <div className="p-4 bg-[#1e2630] rounded-2xl flex items-center gap-3">
+          {
+            getParamStatus(
+              "dissolvedOxygen",
+              parseFloat(readings.dissolvedOxygen),
+              fishType
+            ).icon
+          }
+          <div>
+            <p className="text-gray-400 mb-1">Oxygen</p>
+            <p className="text-2xl text-white">
+              {readings.dissolvedOxygen} mg/L
+            </p>
+          </div>
         </div>
-        <div className="p-4 bg-[#1e2630] rounded-2xl">
-          <p className="text-gray-400 mb-1">pH Level</p>
-          <p className="text-2xl text-white">{readings.pH}</p>
+        <div className="p-4 bg-[#1e2630] rounded-2xl flex items-center gap-3">
+          {getParamStatus("pH", parseFloat(readings.pH), fishType).icon}
+          <div>
+            <p className="text-gray-400 mb-1">pH Level</p>
+            <p className="text-2xl text-white">{readings.pH}</p>
+          </div>
         </div>
-        <div className="p-4 bg-[#1e2630] rounded-2xl">
-          <p className="text-gray-400 mb-1">Turbidity</p>
-          <p className="text-2xl text-white">{readings.turbidity} cm</p>
+        <div className="p-4 bg-[#1e2630] rounded-2xl flex items-center gap-3">
+          {
+            getParamStatus(
+              "turbidity",
+              parseFloat(readings.turbidity),
+              fishType
+            ).icon
+          }
+          <div>
+            <p className="text-gray-400 mb-1">Turbidity</p>
+            <p className="text-2xl text-white">{readings.turbidity} cm</p>
+          </div>
         </div>
       </div>
       <Weather />
