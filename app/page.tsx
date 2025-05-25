@@ -5,7 +5,10 @@ export default function Page() {
   const router = useRouter();
 
   const handleFishSelect = (fishType: "Trout" | "Carp") => {
-    router.push(`/home?fish=${fishType}`);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("fishType", fishType);
+    }
+    router.push("/Dashboard/Home");
   };
 
   return (

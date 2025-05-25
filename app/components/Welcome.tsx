@@ -1,12 +1,10 @@
 import { UserData } from "../lib/data";
 
-interface WelcomeProps {
-  userEmail: string;
-}
 
-export default function Welcome({ userEmail }: WelcomeProps) {
+
+export default function Welcome() {
   // Find the user by email
-  const user = UserData.find((u) => u.email === userEmail);
+
 
   // Hardcoded stats for now
   const alarms = 4;
@@ -19,7 +17,7 @@ export default function Welcome({ userEmail }: WelcomeProps) {
         <div>
           <div className="text-sm text-gray-300">Welcome Back</div>
           <div className="text-2xl font-bold text-[#ffb43a]">
-            {user ? user.name : "User"}
+            { "Ram Bahadur"}
           </div>
         </div>
         <img
