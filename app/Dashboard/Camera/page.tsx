@@ -2,20 +2,13 @@
 import React, { useRef, useState } from "react";
 
 // Hugging Face API details
-const API_URL = "https://ararsen/dr-fish-aadhyanta.hf.space/predict";
+const API_URL = "https://simple-hf-api-server.onrender.com/api/predict";
 const API_DOC = "https://huggingface.co/spaces/ararsen/dr-fish-aadhyanta";
 
 // Helper to call the Hugging Face endpoint
 async function predictDisease(imageFile: File): Promise<any> {
-  // Convert file to blob
-  const imgBlob = await imageFile.arrayBuffer();
-  // Use fetch to POST the image as form-data
   const formData = new FormData();
-  formData.append(
-    "img",
-    new Blob([imgBlob], { type: imageFile.type }),
-    imageFile.name
-  );
+  formData.append("file", imageFile);
 
   const res = await fetch(API_URL, {
     method: "POST",
@@ -52,13 +45,10 @@ export default function DiseaseDetectionPage() {
     try {
       const response = await predictDisease(selectedFile);
       // You may need to adjust this based on your API's response structure
-      setResult(
-        typeof response === "string"
-          ? response
-          : response?.data
-          ? JSON.stringify(response.data)
-          : "No result"
-      );
+      console.log("API Response:", response);
+      const prediction = response[0];
+      const stringPrediction = `Disease Predicted: ${prediction.predicted_class || "Unknown"}\n\nConfidence: ${prediction.confidence.toFixed(2)}%`;
+      setResult(stringPrediction || "No disease detected");
     } catch (err) {
       setError("Failed to detect disease. Please try again.");
     }

@@ -6,6 +6,24 @@ import Weather from "../../components/Weather";
 import Welcome from "@/app/components/Welcome";
 import { AlertTriangle, CheckCircle, Info } from "lucide-react";
 
+const API_URL_READINGS = "https://simple-hf-api-server.onrender.com/random-int"
+
+// Fetch sensor readings from the API and return the data as JSON.
+// If the fetch fails, log the error and return null.
+const getReadings = async () => {
+  try {
+    const response = await fetch(API_URL_READINGS);
+    if (!response.ok) {
+      throw new Error("Failed to fetch readings");
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
 const Page = () => {
   const [fishType, setFishType] = useState<"Trout" | "Carp" | null>(null);
 
@@ -39,20 +57,28 @@ const Page = () => {
 
   useEffect(() => {
     if (!fishType) return;
-    const interval = generateRandomDataInterval((newData) => {
-      setReadings(newData);
+    const fetchAndUpdate = async () => {
+      const data = await getReadings();
+      if (data) {
+        setReadings({
+          temp: data.temperature?.toString() ?? "0",
+          dissolvedOxygen: data.oxygen?.toString() ?? "0",
+          pH: data.ph?.toString() ?? "0",
+          turbidity: data.turbidity?.toString() ?? "0",
+        });
 
-      const numericReadings = {
-        temperature: parseFloat(newData.temp),
-        dissolvedOxygen: parseFloat(newData.dissolvedOxygen),
-        pH: parseFloat(newData.pH),
-        turbidity: parseFloat(newData.turbidity),
-      };
-
-      const newStatus = getOverallStatus(numericReadings, fishType);
-      setStatus(newStatus);
-    }, fishType);
-
+        const numericReadings = {
+          temperature: parseFloat(data.temperature),
+          dissolvedOxygen: parseFloat(data.oxygen),
+          pH: parseFloat(data.ph),
+          turbidity: parseFloat(data.turbidity),
+        };
+        const newStatus = getOverallStatus(numericReadings, fishType);
+        setStatus(newStatus);
+      }
+    };
+    fetchAndUpdate(); // Initial fetch
+    const interval = setInterval(fetchAndUpdate, 3500);
     return () => clearInterval(interval);
   }, [fishType]);
 
