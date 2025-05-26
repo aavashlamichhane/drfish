@@ -78,7 +78,7 @@ const Page = () => {
       }
     };
     fetchAndUpdate(); // Initial fetch
-    const interval = setInterval(fetchAndUpdate, 3500);
+    const interval = setInterval(fetchAndUpdate, 5000);
     return () => clearInterval(interval);
   }, [fishType]);
 

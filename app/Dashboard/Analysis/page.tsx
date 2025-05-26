@@ -12,6 +12,23 @@ type AlertType = {
   solutions: string[];
 };
 
+const API_URL_READINGS = "https://simple-hf-api-server.onrender.com/random-int";
+
+// Fetch sensor readings from the API and return the data as JSON.
+const getReadings = async () => {
+  try {
+    const response = await fetch(API_URL_READINGS);
+    if (!response.ok) {
+      throw new Error("Failed to fetch readings");
+    }
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+};
+
 export default function AnalysisPage() {
   const [fishType, setFishType] = useState<"Trout" | "Carp" | null>(null);
   const [alerts, setAlerts] = useState<AlertType[]>([]);
@@ -36,35 +53,32 @@ export default function AnalysisPage() {
   useEffect(() => {
     if (!fishType) return;
 
-    // Function to generate random readings for demo
-    const generateReadings = () => {
-      if (fishType === "Trout") {
-        return {
-          temperature: +(16 + Math.random() * 6).toFixed(1), // 16-22
-          dissolvedOxygen: +(4 + Math.random() * 2).toFixed(1), // 4-6
-          pH: +(6.5 + Math.random() * 1).toFixed(2), // 6.5-7.5
-          turbidity: +(70 + Math.random() * 20).toFixed(0), // 70-90
-        };
-      } else {
-        return {
-          temperature: +(28 + Math.random() * 6).toFixed(1), // 28-34
-          dissolvedOxygen: +(5 + Math.random() * 2).toFixed(1), // 5-7
-          pH: +(7 + Math.random() * 1).toFixed(2), // 7-8
-          turbidity: +(80 + Math.random() * 20).toFixed(0), // 80-100
-        };
+    const fetchAndUpdate = async () => {
+      const data = await getReadings();
+      if (data) {
+        setReadings({
+          temperature: data.temperature ?? 0,
+          dissolvedOxygen: data.oxygen ?? 0,
+          pH: data.ph ?? 0,
+          turbidity: data.turbidity ?? 0,
+        });
+        setAlerts(
+          getAlerts(
+            {
+              temperature: data.temperature ?? 0,
+              dissolvedOxygen: data.oxygen ?? 0,
+              pH: data.ph ?? 0,
+              turbidity: data.turbidity ?? 0,
+            },
+            fishType
+          )
+        );
       }
-    };
-
-    // Initial and interval update
-    const updateData = () => {
-      const newReadings = generateReadings();
-      setReadings(newReadings);
-      setAlerts(getAlerts(newReadings, fishType));
       setLoading(false);
     };
 
-    updateData();
-    const interval = setInterval(updateData, 5000);
+    fetchAndUpdate(); // Initial fetch
+    const interval = setInterval(fetchAndUpdate, 5000);
     return () => clearInterval(interval);
   }, [fishType]);
 
